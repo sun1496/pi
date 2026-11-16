@@ -1,931 +1,544 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>성심 삼각형 연구소</title>
-<style>
-  :root{
-    --bg:#f4f8ff;
-    --panel:#ffffff;
-    --ink:#24334a;
-    --muted:#6d7a90;
-    --line:#d8e2f1;
-    --accent:#4f7cff;
-    --accent2:#7b61ff;
-    --good:#26a269;
-    --warn:#e59b25;
-    --bad:#d85757;
-    --shadow:0 10px 28px rgba(38,62,105,.12);
-  }
-  *{box-sizing:border-box}
-  html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--ink)}
-  button,input,textarea{font:inherit}
-  button{touch-action:manipulation}
-  #app{
-    width:100vw;height:100vh;
-    display:grid;
-    grid-template-rows:58px 178px minmax(0,1fr) 150px;
-    gap:8px;padding:8px;
-  }
-  header{
-    display:flex;align-items:center;justify-content:space-between;
-    background:linear-gradient(135deg,#365fda,#7456e8);
-    color:#fff;border-radius:18px;padding:0 18px;box-shadow:var(--shadow)
-  }
-  header h1{font-size:22px;margin:0;letter-spacing:-.4px}
-  header p{font-size:13px;margin:0;opacity:.9}
-  .top-actions{display:flex;gap:8px}
-  .ghost{
-    border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.13);
-    color:white;border-radius:10px;padding:7px 11px;font-weight:700;cursor:pointer
-  }
-  .experiments{
-    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;min-height:0
-  }
-  .card{
-    background:var(--panel);border:2px solid transparent;border-radius:16px;padding:10px;
-    box-shadow:0 4px 14px rgba(38,62,105,.08);display:flex;flex-direction:column;min-width:0
-  }
-  .card.active{border-color:var(--accent);box-shadow:0 7px 20px rgba(79,124,255,.2)}
-  .card-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-  .badge{
-    width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
-    color:white;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));flex:none
-  }
-  .card h2{font-size:14px;margin:0;line-height:1.25}
-  .inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:7px}
-  .field{min-width:0}
-  .field label{display:block;font-size:10px;color:var(--muted);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .field input{
-    width:100%;height:30px;border:1px solid var(--line);border-radius:8px;padding:0 7px;
-    color:var(--ink);background:#fbfdff;outline:none
-  }
-  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.12)}
-  .run{
-    margin-top:auto;width:100%;height:32px;border:0;border-radius:9px;
-    background:var(--accent);color:#fff;font-weight:800;cursor:pointer
-  }
-  .stage{
-    min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 215px;gap:8px
-  }
-  .canvas-wrap{
-    min-width:0;min-height:0;background:#fff;border-radius:18px;box-shadow:var(--shadow);
-    position:relative;overflow:hidden;border:1px solid #e4ebf6
-  }
-  #canvas{display:block;width:100%;height:100%;touch-action:none}
-  .canvas-title{
-    position:absolute;left:14px;top:12px;background:rgba(255,255,255,.9);
-    border:1px solid #e1e8f3;border-radius:10px;padding:7px 10px;font-size:13px;font-weight:800;
-    pointer-events:none;backdrop-filter:blur(6px)
-  }
-  .hint{
-    position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
-    background:rgba(36,51,74,.88);color:white;border-radius:999px;padding:7px 13px;
-    font-size:12px;pointer-events:none;opacity:0;transition:.25s;white-space:nowrap
-  }
-  .hint.show{opacity:1}
-  .side{
-    background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:12px;
-    display:flex;flex-direction:column;gap:9px;min-height:0
-  }
-  .side h3{margin:0;font-size:15px}
-  .status-box{
-    border-radius:12px;background:#eef4ff;padding:10px;min-height:72px;
-    font-size:13px;line-height:1.5
-  }
-  .legend{display:grid;gap:6px;font-size:12px;color:var(--muted)}
-  .legend span{display:flex;align-items:center;gap:7px}
-  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-  .side button{
-    border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;font-weight:700;
-    color:var(--ink);cursor:pointer
-  }
-  .rotate-panel{
-    display:none;border:1px solid #ffd2bc;background:#fff8f4;border-radius:12px;padding:6px;gap:4px
-  }
-  .rotate-panel.show{display:grid}
-  .rotate-title{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:10px;color:#9b4a28}
-  .rotate-title b{font-size:11px;color:#6f351e;white-space:nowrap}
-  .rotate-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rotate-row{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-  .rotate-row button{font-size:10px;padding:5px 1px;border-color:#ffc3a6;background:#fff;color:#a54720}
-  .rotate-row button:active{background:#ffe5d8;transform:translateY(1px)}
-  .records{
-    min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 1.25fr;gap:8px
-  }
-  .record,.final-note{
-    background:#fff;border-radius:15px;box-shadow:0 4px 14px rgba(38,62,105,.08);
-    padding:9px;display:flex;flex-direction:column;min-width:0;min-height:0
-  }
-  .record label,.final-note label{font-size:12px;font-weight:900;margin-bottom:5px}
-  textarea{
-    width:100%;flex:1;min-height:0;resize:none;border:1px solid var(--line);border-radius:9px;
-    padding:8px;color:var(--ink);outline:none;background:#fbfdff;line-height:1.35;font-size:12px
-  }
-  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.12)}
-  .final-note{background:linear-gradient(145deg,#fff8dc,#fff)}
-  .final-note label{color:#7d5c00}
-  .tiny{font-size:10px;color:var(--muted);margin-top:4px}
-  @media (max-width:1000px){
-    #app{grid-template-rows:52px 166px minmax(0,1fr) 138px}
-    header h1{font-size:18px}
-    header p{display:none}
-    .card{padding:8px}
-    .card h2{font-size:12px}
-    .stage{grid-template-columns:minmax(0,1fr) 180px}
-  }
+<!-- saved from url=(0085)file:///C:/Users/User/Downloads/seongsim_pi_lab_compact_precision_plus2pct%20(1).html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-  @media (max-height:820px){
-    #app{grid-template-rows:52px 164px minmax(0,1fr) 136px;gap:6px;padding:6px}
-    .side{padding:8px;gap:5px}
-    .side h3{font-size:14px}
-    .status-box{min-height:54px;padding:7px;font-size:12px;line-height:1.35}
-    .legend{gap:3px;font-size:10px}
-    .side button{padding:5px;font-size:11px}
-    .tiny{font-size:9px;line-height:1.2;margin-top:1px}
-    .hint{bottom:6px;padding:5px 10px;font-size:10px}
-  }
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>성심 원주율 발견 연구소 - 실험 1·2</title>
+<style>
+:root{
+  --ink:#263447; --muted:#667085; --line:#d9d3c7; --panel:rgba(255,255,255,.96);
+  --blue:#5f7bdd; --sky:#eaf2ff; --mint:#eaf9f3; --peach:#fff1df;
+  --sun:#fff7cf; --lav:#f3efff; --orange:#d77c2c; --shadow:0 10px 28px rgba(47,58,77,.10);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;
+  font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  color:var(--ink);background:linear-gradient(135deg,#f8f4ea,#f1eee7);
+  -webkit-text-size-adjust:100%;
+}
+button,input{font:inherit;-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation}
+.app{
+  width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;gap:8px;
+  padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right))
+          max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+}
+header{
+  flex:0 0 auto;min-height:60px;display:flex;align-items:center;gap:14px;padding:8px 13px;
+  border:1px solid var(--line);border-radius:17px;background:var(--panel);box-shadow:var(--shadow);
+}
+header h1{margin:0;font-size:1.22rem;letter-spacing:-.04em;white-space:nowrap}
+header p{
+  flex:1;margin:0;padding:7px 10px;border-radius:12px;background:var(--sun);
+  font-size:.75rem;line-height:1.4;font-weight:800;color:#5b5132;
+}
+.page-tabs{
+  display:flex;gap:8px;flex:0 0 auto;
+}
+.tab-btn{
+  min-height:42px;padding:0 14px;border:1px solid #ccd6ff;border-radius:12px;
+  background:#fff;color:#5065b5;font-size:.78rem;font-weight:900;cursor:pointer;
+}
+.tab-btn.active{
+  background:linear-gradient(135deg,#5f7bdd,#5aa5e8);color:#fff;border-color:transparent;
+}
+.page{display:none;flex:1 1 auto;min-height:0}
+.page.active{display:grid;grid-template-columns:350px minmax(0,1fr);gap:8px}
+.left{
+  min-height:0;padding:9px;border:1px solid var(--line);border-radius:17px;background:var(--panel);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;
+}
+.scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:3px}
+h2{font-size:.9rem;margin:0 0 4px}
+.guide{font-size:.65rem;line-height:1.42;color:var(--muted);margin:0 0 6px}
+.card{padding:7px;border:1px solid var(--line);border-radius:11px;margin-bottom:5px}
+.card.a{background:var(--sky)} .card.b{background:var(--mint)} .card.c{background:var(--peach)} .card.d{background:#fff4e8}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.card-head b{font-size:.78rem}
+.tag{padding:3px 6px;border-radius:999px;background:rgba(255,255,255,.86);font-size:.59rem;font-weight:900;color:#5e697a}
+.row{display:grid;grid-template-columns:1fr 1.2fr;gap:6px}
+.field label{display:block;font-size:.61rem;font-weight:900;color:#4e5b6c;margin-bottom:2px}
+.fieldline{display:flex;align-items:center;gap:4px}
+input{
+  width:100%;min-width:0;height:38px;border:1px solid #c8d0dc;border-radius:9px;background:#fff;
+  text-align:center;font-size:.84rem;font-weight:900;outline:none;padding:4px 6px;
+}
+input:focus{border-color:#7990e7;box-shadow:0 0 0 3px rgba(95,123,221,.14)}
+input[readonly]{background:#f8f9fb;color:#49566a}
+.unit{font-size:.61rem;font-weight:900;color:#667085}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+button{
+  min-height:42px;border:0;border-radius:10px;font-size:.74rem;font-weight:900;cursor:pointer;
+}
+.primary{background:linear-gradient(135deg,#5f7bdd,#5aa5e8);color:#fff}
+.secondary{background:#fff;color:#5065b5;border:1px solid #ccd6ff}
+.orange{background:linear-gradient(135deg,#db8b3c,#f0ad55);color:#fff}
+button:active{transform:scale(.985)}
+button:disabled{opacity:.42;cursor:not-allowed}
+.rule{
+  margin-top:6px;padding:7px;border-radius:10px;background:var(--lav);border:1px solid #ddd6f3;
+  font-size:.62rem;line-height:1.42;color:#575d71;
+}
+.formula{margin-top:4px;padding:5px 6px;border-radius:7px;background:#fff;border:1px dashed #c7c0e5;font-weight:900}
+.note{margin-top:5px;padding:5px 6px;border-radius:7px;background:#fffaf4;border:1px dashed #e5ba86;font-size:.612rem;font-weight:800;line-height:1.35}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.quick button{min-height:38px}
+.custom{display:grid;grid-template-columns:1.15fr .85fr;gap:6px;margin-top:6px}
+.status{
+  flex:0 0 auto;margin-top:6px;padding:7px 8px;border-radius:9px;background:#f4f7ff;border:1px solid #d9e1ff;
+  font-size:.63rem;font-weight:900;line-height:1.35;color:#45536b;
+}
+.status.error{background:#fff1e9;color:#974d23}
+.right{
+  min-width:0;min-height:0;padding:8px;border:1px solid var(--line);border-radius:17px;
+  background:var(--panel);box-shadow:var(--shadow);display:flex;flex-direction:column;
+}
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:0 2px 5px}
+.toolbar h2{margin:0}
+.badge{padding:5px 9px;border-radius:999px;background:#eef1ff;border:1px solid #d9defc;color:#4961b4;font-size:.63rem;font-weight:900}
+.holder{
+  flex:1;min-height:0;overflow:hidden;border:1px solid #e5d69c;border-radius:13px;background:#fff8dc;
+  position:relative;
+}
+.precision-control{
+  position:absolute;left:12px;top:10px;z-index:10;width:min(240px,33.7%);
+  padding:5.1px 8.2px;border-radius:10px;background:rgba(255,255,255,.92);border:1px solid #d9d3c7;
+  box-shadow:0 4px 10px rgba(47,58,77,.08);
+}
+.precision-title{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;font-size:.612rem;font-weight:900;color:#40506a}
+.precision-value{padding:2px 5px;border-radius:999px;background:#eef1ff;color:#4961b4;font-size:.592rem;font-weight:900;white-space:nowrap}
+.precision-row{display:block}
+.precision-range{
+  display:block;width:100%;height:20.4px;margin:0;
+  accent-color:#5f7bdd;touch-action:manipulation;
+}
+.tick-labels{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  margin-top:-3px;padding:0 1px;
+  font-size:.51rem;font-weight:900;color:#667085;
+  text-align:center;
+}
+.tick-labels span{
+  position:relative;padding-top:5px;white-space:nowrap;
+}
+.tick-labels span::before{
+  content:"";position:absolute;top:0;left:50%;
+  width:1px;height:3px;background:#8b94a5;
+  transform:translateX(-50%);
+}
+.precision-hint{margin-top:4px;font-size:.55rem;line-height:1.25;color:#7a8190}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+@media(max-height:700px) and (orientation:landscape){
+  header{min-height:50px}header h1{font-size:1.08rem}header p{font-size:.68rem}
+  .page.active{grid-template-columns:325px minmax(0,1fr)}
+  .guide{display:none}.card{padding:6px}.rule{padding:6px}
+  input{height:34px}button{min-height:37px}.tab-btn{min-height:38px}
+}
+@media(max-width:899px),(orientation:portrait){
+  html,body{height:auto;overflow:auto}.app{height:auto;min-height:100dvh}
+  header{display:block}header p{margin-top:7px}.page.active{display:flex;flex-direction:column}.right{min-height:650px}
+}
 </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <div>
-      <h1>△ 성심 삼각형 연구소</h1>
-      <p>수치를 바꾸고, 움직임을 관찰하고, 나만의 규칙을 기록해 보세요.</p>
-    </div>
-    <div class="top-actions">
-      <button class="ghost" id="pauseBtn">애니메이션 멈춤</button>
-      <button class="ghost" id="resetBtn">전체 초기화</button>
-    </div>
-  </header>
+<div class="app">
+<header>
+  <h1>⭕ 성심 원주율 발견 연구소</h1>
+  <p>실험 1과 실험 2로 나누어 실험합니다. 실험 1은 지름 10·20·30cm인 세 원을 비교하고, 실험 2는 다른 크기의 원을 같은 방법으로 실험합니다.</p>
+</header>
 
-  <section class="experiments" id="experimentCards">
-    <article class="card active" data-exp="1">
-      <div class="card-head"><div class="badge">1</div><h2>세 각의 크기</h2></div>
-      <div class="inputs">
-        <div class="field"><label>각 1 (°)</label><input id="e1a" type="number" min="1" max="178" value="40"></div>
-        <div class="field"><label>각 2 (°)</label><input id="e1b" type="number" min="1" max="178" value="60"></div>
-        <div class="field"><label>각 3 (°)</label><input id="e1c" type="number" min="1" max="178" value="80"></div>
-      </div>
-      <button class="run" data-run="1">생성하기</button>
-    </article>
+<div class="page-tabs">
+  <button class="tab-btn active" data-page="page1">실험 1 · 세 원 비교</button>
+  <button class="tab-btn" data-page="page2">실험 2 · 다른 크기 실험</button>
+</div>
 
-    <article class="card" data-exp="2">
-      <div class="card-head"><div class="badge">2</div><h2>두 변과 그 사이 각</h2></div>
-      <div class="inputs">
-        <div class="field"><label>변 1</label><input id="e2s1" type="number" min="1" value="6"></div>
-        <div class="field"><label>변 2</label><input id="e2s2" type="number" min="1" value="5"></div>
-        <div class="field"><label>사이 각 (°)</label><input id="e2ang" type="number" min="1" max="179" value="55"></div>
-      </div>
-      <button class="run" data-run="2">생성하기</button>
-    </article>
+<section class="page active" id="page1">
+  <aside class="left">
+    <div class="scroll">
+      <h2>1. 세 원을 비교해 보기</h2>
+      <p class="guide">지름 10cm, 20cm, 30cm의 원을 각각 한 바퀴 굴립니다. 예상 이동거리를 먼저 적고 실험하세요.</p>
 
-    <article class="card" data-exp="3">
-      <div class="card-head"><div class="badge">3</div><h2>두 변과 다른 위치 각</h2></div>
-      <div class="inputs">
-        <div class="field"><label>밑변</label><input id="e3base" type="number" min="1" value="7"></div>
-        <div class="field"><label>다른 변</label><input id="e3side" type="number" min="1" value="5"></div>
-        <div class="field"><label>각 (°)</label><input id="e3ang" type="number" min="1" max="179" value="35"></div>
-      </div>
-      <button class="run" data-run="3">생성하기</button>
-    </article>
-
-    <article class="card" data-exp="4">
-      <div class="card-head"><div class="badge">4</div><h2>세 변의 길이</h2></div>
-      <div class="inputs">
-        <div class="field"><label>변 1</label><input id="e4s1" type="number" min="1" value="6"></div>
-        <div class="field"><label>변 2</label><input id="e4s2" type="number" min="1" value="5"></div>
-        <div class="field"><label>변 3</label><input id="e4s3" type="number" min="1" value="7"></div>
-      </div>
-      <button class="run" data-run="4">생성하기</button>
-    </article>
-
-    <article class="card" data-exp="5">
-      <div class="card-head"><div class="badge">5</div><h2>한 변과 양 끝 각</h2></div>
-      <div class="inputs">
-        <div class="field"><label>밑변</label><input id="e5base" type="number" min="1" value="7"></div>
-        <div class="field"><label>왼쪽 각 (°)</label><input id="e5a" type="number" min="1" max="178" value="50"></div>
-        <div class="field"><label>오른쪽 각 (°)</label><input id="e5b" type="number" min="1" max="178" value="65"></div>
-      </div>
-      <button class="run" data-run="5">생성하기</button>
-    </article>
-  </section>
-
-  <section class="stage">
-    <div class="canvas-wrap">
-      <canvas id="canvas"></canvas>
-      <div class="canvas-title" id="canvasTitle">실험 1 · 세 각의 크기</div>
-      <div class="hint" id="hint">삼각형을 탭해 선택 · 안쪽을 끌어 이동 · ↻ 손잡이 또는 회전 버튼 사용</div>
-    </div>
-    <aside class="side">
-      <h3>현재 실험 상태</h3>
-      <div class="status-box" id="status">세 각을 입력한 뒤 생성하기를 눌러 보세요.</div>
-      <div class="legend">
-        <span><i class="dot" style="background:#4f7cff"></i>기준 도형</span>
-        <span><i class="dot" style="background:#ff8b55"></i>움직이거나 끌 수 있는 도형</span>
-        <span><i class="dot" style="background:#26a269"></i>서로 정확히 겹친 상태</span>
-      </div>
-      <button id="replayBtn">현재 실험 다시 보기</button>
-      <button id="scatterBtn">도형 다시 흩어 놓기</button>
-      <div class="rotate-panel" id="rotatePanel">
-        <div class="rotate-title"><b>선택한 삼각형 회전</b><span id="selectedInfo">주황색 삼각형을 선택하세요</span></div>
-        <div class="rotate-row">
-          <button id="rotateLeft15" aria-label="왼쪽으로 15도 회전">↶15°</button>
-          <button id="rotateLeft5" aria-label="왼쪽으로 5도 회전">↶5°</button>
-          <button id="rotateRight5" aria-label="오른쪽으로 5도 회전">5°↷</button>
-          <button id="rotateRight15" aria-label="오른쪽으로 15도 회전">15°↷</button>
+      <div class="card a">
+        <div class="card-head"><b>원 A</b><span class="tag">지름 10cm</span></div>
+        <div class="row">
+          <div class="field"><label>지름</label><div class="fieldline"><input value="10" readonly=""><span class="unit">cm</span></div></div>
+          <div class="field"><label>예상 이동거리</label><div class="fieldline"><input id="p1" type="number" inputmode="decimal" min="0" step="0.001" placeholder="?"><span class="unit">cm</span></div></div>
         </div>
       </div>
-      <div class="tiny">삼각형 안쪽은 위치 이동, 바깥의 ↻ 손잡이는 자유 회전입니다. 회전 버튼은 아이패드에서도 정확히 작동합니다.</div>
-    </aside>
-  </section>
 
-  <section class="records">
-    <div class="record"><label>실험 1 관찰결과</label><textarea id="note1" placeholder="크기와 모양이 어떻게 변했나요?"></textarea></div>
-    <div class="record"><label>실험 2 관찰결과</label><textarea id="note2" placeholder="끌어서 겹쳐 본 결과를 적어 보세요."></textarea></div>
-    <div class="record"><label>실험 3 관찰결과</label><textarea id="note3" placeholder="움직이는 변과 가능한 모양을 관찰하세요."></textarea></div>
-    <div class="record"><label>실험 4 관찰결과</label><textarea id="note4" placeholder="세 선분이 만나는 모습을 적어 보세요."></textarea></div>
-    <div class="record"><label>실험 5 관찰결과</label><textarea id="note5" placeholder="두 선이 만나는 위치를 관찰하세요."></textarea></div>
-    <div class="final-note"><label>나의 최종 발견</label><textarea id="finalNote" placeholder="어떤 입력에서는 크기가 달라질 수 있었나요? 어떤 입력에서는 돌리거나 옮기면 정확히 겹쳤나요? 실험 번호와 근거를 함께 정리해 보세요."></textarea></div>
+      <div class="card b">
+        <div class="card-head"><b>원 B</b><span class="tag">지름 20cm</span></div>
+        <div class="row">
+          <div class="field"><label>지름</label><div class="fieldline"><input value="20" readonly=""><span class="unit">cm</span></div></div>
+          <div class="field"><label>예상 이동거리</label><div class="fieldline"><input id="p2" type="number" inputmode="decimal" min="0" step="0.001" placeholder="?"><span class="unit">cm</span></div></div>
+        </div>
+      </div>
+
+      <div class="card c">
+        <div class="card-head"><b>원 C</b><span class="tag">지름 30cm</span></div>
+        <div class="row">
+          <div class="field"><label>지름</label><div class="fieldline"><input value="30" readonly=""><span class="unit">cm</span></div></div>
+          <div class="field"><label>예상 이동거리</label><div class="fieldline"><input id="p3" type="number" inputmode="decimal" min="0" step="0.001" placeholder="?"><span class="unit">cm</span></div></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="rollMainBtn">세 원 한 바퀴 굴리기</button>
+        <button class="secondary" id="resetMainBtn">출발점으로</button>
+      </div>
+
+      <div class="rule">
+        한 바퀴가 끝난 뒤 <b>주황색 끝점</b>을 누르면 이동거리가 나타납니다.
+        <div class="formula">왼쪽 위에서 소수 자릿수를 정한 뒤 끝점을 눌러 보세요.</div>
+      </div>
+    </div>
+    <div class="status" id="status1">세 원의 예상 이동거리를 입력한 뒤 실험을 시작하세요.</div>
+  </aside>
+
+  <section class="right">
+    <div class="toolbar">
+      <h2>10·20·30cm 비교 실험</h2>
+      <span class="badge" id="badge1">출발 준비</span>
+    </div>
+    <div class="holder" id="holder1">
+      <div class="precision-control">
+        <div class="precision-title">
+          <span>표시할 소수 자릿수</span>
+          <span class="precision-value" id="precisionValue1">소수 3째 자리</span>
+        </div>
+        <div class="precision-row">
+          <input class="precision-range" id="precisionRange1" type="range" min="1" max="6" step="1" value="3">
+          <div class="tick-labels" aria-hidden="true">
+            <span>1째</span><span>2째</span><span>3째</span><span>4째</span><span>5째</span><span>6째</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="canvas1" width="1520" height="730"></canvas>
+    </div>
   </section>
+</section>
+
+<section class="page" id="page2">
+  <aside class="left">
+    <div class="scroll">
+      <h2>2. 다른 크기의 원도 실험해 보기</h2>
+      <p class="guide">실험 1과 같은 형태로 한 번에 한 개의 원을 실험합니다. 15cm, 25cm 또는 50~100cm를 넣어 보세요.</p>
+
+      <div class="card d">
+        <div class="card-head"><b>빠른 실험</b><span class="tag">정해진 값</span></div>
+        <div class="quick">
+          <button class="orange" id="run15Btn">지름 15cm 실험</button>
+          <button class="orange" id="run25Btn">지름 25cm 실험</button>
+        </div>
+      </div>
+
+      <div class="card d">
+        <div class="card-head"><b>직접 입력 실험</b><span class="tag">50~100cm</span></div>
+        <div class="custom">
+          <div class="field">
+            <label>지름 입력</label>
+            <div class="fieldline"><input id="customD" type="number" inputmode="decimal" min="50" max="100" step="1" value="50"><span class="unit">cm</span></div>
+          </div>
+          <button class="primary" id="runCustomBtn">이 값으로 실험</button>
+        </div>
+      </div>
+
+      <div class="card d">
+        <div class="card-head"><b>현재 실험 원</b><span class="tag">활동지 기록용</span></div>
+        <div class="row">
+          <div class="field"><label>현재 지름</label><div class="fieldline"><input id="currentD" value="15" readonly=""><span class="unit">cm</span></div></div>
+          <div class="field"><label>예상 이동거리</label><div class="fieldline"><input id="predSingle" type="number" inputmode="decimal" min="0" step="0.001" placeholder="?"><span class="unit">cm</span></div></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="resetSingleBtn">출발점으로</button>
+        <button class="primary" id="rerunSingleBtn">현재 값 다시 실험</button>
+      </div>
+
+      <div class="rule">
+        실험 2도 실험 1과 같은 방식입니다.
+        <div class="formula">한 바퀴가 끝난 뒤 주황색 끝점을 눌러 이동거리를 확인하세요.</div>
+      </div>
+      <div class="note">50~100cm는 눈금이 더 넓게 잡히며, 표시값은 선택한 소수 자릿수에 따라 나타납니다.</div>
+    </div>
+    <div class="status" id="status2">15cm, 25cm 또는 50~100cm를 선택하여 실험하세요.</div>
+  </aside>
+
+  <section class="right">
+    <div class="toolbar">
+      <h2 id="singleTitle">지름 15cm 실험</h2>
+      <span class="badge" id="badge2">출발 준비</span>
+    </div>
+    <div class="holder" id="holder2">
+      <div class="precision-control">
+        <div class="precision-title">
+          <span>표시할 소수 자릿수</span>
+          <span class="precision-value" id="precisionValue2">소수 3째 자리</span>
+        </div>
+        <div class="precision-row">
+          <input class="precision-range" id="precisionRange2" type="range" min="1" max="6" step="1" value="3">
+          <div class="tick-labels" aria-hidden="true">
+            <span>1째</span><span>2째</span><span>3째</span><span>4째</span><span>5째</span><span>6째</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="canvas2" width="1" height="1"></canvas>
+    </div>
+  </section>
+</section>
 </div>
 
 <script>
-(() => {
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const title = document.getElementById('canvasTitle');
-  const status = document.getElementById('status');
-  const hint = document.getElementById('hint');
-  const pauseBtn = document.getElementById('pauseBtn');
+"use strict";
 
-  let W=0,H=0,dpr=1;
-  let current=1, running=true, startTime=performance.now();
-  let params={}, triangles=[], drag=null, hoverIndex=-1, selectedTriangle=null;
-
-  const names = {
-    1:'세 각의 크기',
-    2:'두 변과 그 사이 각',
-    3:'두 변과 다른 위치 각',
-    4:'세 변의 길이',
-    5:'한 변과 양 끝 각'
-  };
-
-  const get = id => Number(document.getElementById(id).value);
-  const rad = d => d*Math.PI/180;
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-
-  function resize(){
-    const r=canvas.getBoundingClientRect();
-    dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=Math.round(r.width*dpr);
-    canvas.height=Math.round(r.height*dpr);
-    W=r.width;H=r.height;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  window.addEventListener('resize',resize);
-
-  function setActive(n){
-    const changed=current!==n;
-    current=n;
-    if(changed){
-      params={};
-      triangles=[];
-      drag=null;
-    }
-    document.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',Number(c.dataset.exp)===n));
-    title.textContent=`실험 ${n} · ${names[n]}`;
-    hint.classList.toggle('show',[2,4,5].includes(n));
-    document.getElementById('rotatePanel').classList.toggle('show',[2,4,5].includes(n));
-    if(![2,4,5].includes(n)) selectTriangle(null);
-  }
-
-  function solveExperiment3(base,side,ang){
-    if(![base,side,ang].every(Number.isFinite) || base<=0 || side<=0 || ang<=0 || ang>=180){
-      return [];
-    }
-    const theta=rad(ang);
-    const c=Math.cos(theta);
-    const s=Math.sin(theta);
-    const disc=side*side-base*base*s*s;
-    const tol=Math.max(1,base*base,side*side)*1e-10;
-    if(disc < -tol) return [];
-
-    const root=Math.sqrt(Math.max(0,disc));
-    const eps=Math.max(1,base,side)*1e-9;
-    const mergeTol=Math.max(1,base,side)*1e-6;
-    const candidates=[base*c-root,base*c+root];
-    const roots=[];
-    candidates.forEach(t=>{
-      if(t>eps && roots.every(v=>Math.abs(v-t)>mergeTol)) roots.push(t);
-    });
-    roots.sort((a,b)=>a-b);
-    return roots;
-  }
-
-  function validate(n){
-    if(n===1){
-      const a=get('e1a'),b=get('e1b'),c=get('e1c');
-      if([a,b,c].some(v=>!isFinite(v)||v<=0)) return '각의 크기는 0보다 커야 합니다.';
-      if(Math.abs(a+b+c-180)>.01) return '세 각의 합이 180°가 되도록 입력해 주세요.';
-      params={a,b,c}; return '';
-    }
-    if(n===2){
-      const s1=get('e2s1'),s2=get('e2s2'),ang=get('e2ang');
-      if(s1<=0||s2<=0) return '변의 길이는 0보다 커야 합니다.';
-      if(ang<=0||ang>=180) return '각은 0°보다 크고 180°보다 작아야 합니다.';
-      params={s1,s2,ang}; return '';
-    }
-    if(n===3){
-      const base=get('e3base'),side=get('e3side'),ang=get('e3ang');
-      if(![base,side,ang].every(Number.isFinite)) return '세 칸에 숫자를 모두 입력해 주세요.';
-      if(base<=0||side<=0) return '변의 길이는 0보다 커야 합니다.';
-      if(ang<=0||ang>=180) return '각은 0°보다 크고 180°보다 작아야 합니다.';
-      const roots=solveExperiment3(base,side,ang);
-      if(!roots.length) return '입력한 세 조건으로는 세 점이 서로 다른 삼각형을 만들 수 없습니다. 다른 값을 넣어 보세요.';
-      params={base,side,ang,roots}; return '';
-    }
-    if(n===4){
-      const s1=get('e4s1'),s2=get('e4s2'),s3=get('e4s3');
-      if([s1,s2,s3].some(v=>v<=0)) return '변의 길이는 0보다 커야 합니다.';
-      const sorted=[s1,s2,s3].sort((a,b)=>a-b);
-      if(sorted[0]+sorted[1]<=sorted[2]) return '짧은 두 변의 합이 가장 긴 변보다 커야 합니다.';
-      params={s1,s2,s3}; return '';
-    }
-    const base=get('e5base'),a=get('e5a'),b=get('e5b');
-    if(base<=0) return '변의 길이는 0보다 커야 합니다.';
-    if(a<=0||b<=0||a+b>=180) return '두 각은 0°보다 크고, 합은 180°보다 작아야 합니다.';
-    params={base,a,b}; return '';
-  }
-
-  function runExperiment(n){
-    setActive(n);
-    const err=validate(n);
-    if(err){
-      params={};
-      triangles=[];
-      status.innerHTML=`<b style="color:#d85757">입력 확인</b><br>${err}`;
-      return;
-    }
-    startTime=performance.now(); drag=null;
-    buildTriangles();
-    const messages={
-      1:'각의 표시를 살펴보며, 삼각형의 크기가 어떻게 변하는지 관찰하세요.',
-      2:'주황색 삼각형을 선택하세요. 안쪽을 끌어 이동하고, ↻ 손잡이 또는 회전 버튼으로 돌려 겹쳐 보세요.',
-      3:'초록색으로 표시되는 만남의 위치와 주황색 변의 흔들림을 관찰하세요.',
-      4:'주황색 삼각형을 이동하고 회전하여 기준 도형과 겹쳐 보세요. 모든 변의 표시도 비교하세요.',
-      5:'주황색 삼각형을 이동하고 회전하여 겹쳐 보세요. 밑변과 양 끝 각의 표시도 비교하세요.'
-    };
-    status.textContent=messages[n];
-  }
-
-  function referenceTriangle(){
-    const cx=W*.48, cy=H*.56, maxW=W*.48, maxH=H*.64;
-    if(current===1){
-      const A=rad(params.a), B=rad(params.b);
-      const base=1;
-      const x=(Math.sin(B)*Math.cos(A))/Math.sin(Math.PI-A-B);
-      const y=(Math.sin(B)*Math.sin(A))/Math.sin(Math.PI-A-B);
-      return fit([{x:0,y:0},{x:base,y:0},{x,y:-y}],cx,cy,maxW,maxH);
-    }
-    if(current===2){
-      return fit([{x:0,y:0},{x:params.s1,y:0},{x:params.s2*Math.cos(rad(params.ang)),y:-params.s2*Math.sin(rad(params.ang))}],cx,cy,maxW,maxH);
-    }
-    if(current===4){
-      const a=params.s1,b=params.s2,c=params.s3;
-      const x=(a*a+c*c-b*b)/(2*a), y=Math.sqrt(Math.max(0,c*c-x*x));
-      return fit([{x:0,y:0},{x:a,y:0},{x,y:-y}],cx,cy,maxW,maxH);
-    }
-    if(current===5){
-      const L=params.base,A=rad(params.a),B=rad(params.b);
-      const t=L*Math.sin(B)/Math.sin(Math.PI-A-B);
-      return fit([{x:0,y:0},{x:L,y:0},{x:t*Math.cos(A),y:-t*Math.sin(A)}],cx,cy,maxW,maxH);
-    }
-    return [];
-  }
-
-  function fit(points,cx,cy,maxW,maxH){
-    const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
-    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
-    const scale=Math.min(maxW/Math.max(1,maxX-minX),maxH/Math.max(1,maxY-minY));
-    const mx=(minX+maxX)/2,my=(minY+maxY)/2;
-    return points.map(p=>({x:cx+(p.x-mx)*scale,y:cy+(p.y-my)*scale}));
-  }
-
-  function centroid(pts){return {x:pts.reduce((s,p)=>s+p.x,0)/3,y:pts.reduce((s,p)=>s+p.y,0)/3};}
-  function transform(pts,tx,ty,ang,scale=1){
-    const c=centroid(pts),co=Math.cos(ang),si=Math.sin(ang);
-    return pts.map(p=>{
-      const x=(p.x-c.x)*scale,y=(p.y-c.y)*scale;
-      return {x:c.x+x*co-y*si+tx,y:c.y+x*si+y*co+ty};
-    });
-  }
-
-  function buildTriangles(){
-    triangles=[];
-    if([2,4,5].includes(current)){
-      const ref=referenceTriangle();
-      triangles.push({pts:ref,reference:true,dx:0,dy:0,angle:0,locked:true});
-      const spots=[
-        {x:-W*.32,y:-H*.18,a:.35},
-        {x:W*.34,y:-H*.16,a:-.55},
-        {x:W*.34,y:H*.2,a:1.0}
-      ];
-      spots.forEach((s,i)=>triangles.push({base:ref,dx:s.x,dy:s.y,angle:s.a,reference:false,locked:false,index:i}));
-      selectTriangle(triangles[1] || null);
-    }else{
-      selectTriangle(null);
-    }
-  }
-
-  function scatter(){
-    if(![2,4,5].includes(current)) return;
-    const spots=[{x:-W*.32,y:-H*.18,a:.35},{x:W*.34,y:-H*.16,a:-.55},{x:W*.34,y:H*.2,a:1.0}];
-    triangles.slice(1).forEach((t,i)=>Object.assign(t,{dx:spots[i].x,dy:spots[i].y,angle:spots[i].a,locked:false}));
-    selectTriangle(triangles[1] || null);
-  }
-
-  function pathTriangle(pts){
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(pts[1].x,pts[1].y);ctx.lineTo(pts[2].x,pts[2].y);ctx.closePath();
-  }
-  function drawTriangle(pts,stroke,fill,width=4,dash=[]){
-    ctx.save();ctx.setLineDash(dash);ctx.lineWidth=width;ctx.lineJoin='round';ctx.strokeStyle=stroke;ctx.fillStyle=fill;
-    pathTriangle(pts);ctx.fill();ctx.stroke();
-    pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle=stroke;ctx.fill();});
-    ctx.restore();
-  }
-  function labelPoint(p,text,color='#24334a'){
-    ctx.save();ctx.fillStyle=color;ctx.font='800 13px sans-serif';ctx.fillText(text,p.x+8,p.y-8);ctx.restore();
-  }
-  function drawAngleArc(v,p1,p2,label,radius=24){
-    let a1=Math.atan2(p1.y-v.y,p1.x-v.x),a2=Math.atan2(p2.y-v.y,p2.x-v.x);
-    let diff=((a2-a1+Math.PI*3)%(Math.PI*2))-Math.PI;
-    ctx.save();
-    ctx.strokeStyle='#7b61ff';ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(v.x,v.y,radius,a1,a1+diff,diff<0);ctx.stroke();
-    const mid=a1+diff/2;
-    const tx=v.x+(radius+10)*Math.cos(mid), ty=v.y+(radius+10)*Math.sin(mid);
-    ctx.font='800 11px sans-serif';
-    const tw=ctx.measureText(label).width;
-    ctx.fillStyle='rgba(255,255,255,.94)';
-    ctx.fillRect(tx-tw/2-4,ty-9,tw+8,18);
-    ctx.fillStyle='#5b44d4';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(label,tx,ty);
-    ctx.restore();
-  }
-
-  function fmtNumber(v){
-    return Number.isInteger(v) ? String(v) : String(Number(v.toFixed(2)));
-  }
-
-  function normalizeAngle(a){
-    while(a>Math.PI)a-=Math.PI*2;
-    while(a<-Math.PI)a+=Math.PI*2;
-    return a;
-  }
-
-  function selectTriangle(tr){
-    selectedTriangle = tr && !tr.locked ? tr : null;
-    const info=document.getElementById('selectedInfo');
-    if(info) info.textContent=selectedTriangle ? `주황색 삼각형 ${selectedTriangle.index+1} 선택됨` : '주황색 삼각형을 선택하세요';
-  }
-
-  function drawEdgeLabel(p1,p2,text,pts,color='#24334a'){
-    const c=centroid(pts);
-    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-    const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
-    let nx=-dy/len, ny=dx/len;
-    const d1=Math.hypot(mx+nx*18-c.x,my+ny*18-c.y);
-    const d2=Math.hypot(mx-nx*18-c.x,my-ny*18-c.y);
-    if(d2>d1){nx=-nx;ny=-ny;}
-    const x=mx+nx*18, y=my+ny*18;
-    ctx.save();
-    ctx.font='800 11px sans-serif';
-    const tw=ctx.measureText(text).width;
-    ctx.fillStyle='rgba(255,255,255,.94)';
-    ctx.fillRect(x-tw/2-4,y-9,tw+8,18);
-    ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(text,x,y);
-    ctx.restore();
-  }
-
-  function drawConditionLabels(pts,color='#24334a'){
-    if(current===2){
-      drawEdgeLabel(pts[0],pts[1],fmtNumber(params.s1),pts,color);
-      drawEdgeLabel(pts[0],pts[2],fmtNumber(params.s2),pts,color);
-      drawAngleArc(pts[0],pts[1],pts[2],`${fmtNumber(params.ang)}°`,20);
-    }else if(current===4){
-      drawEdgeLabel(pts[0],pts[1],fmtNumber(params.s1),pts,color);
-      drawEdgeLabel(pts[1],pts[2],fmtNumber(params.s2),pts,color);
-      drawEdgeLabel(pts[2],pts[0],fmtNumber(params.s3),pts,color);
-    }else if(current===5){
-      drawEdgeLabel(pts[0],pts[1],fmtNumber(params.base),pts,color);
-      drawAngleArc(pts[0],pts[1],pts[2],`${fmtNumber(params.a)}°`,20);
-      drawAngleArc(pts[1],pts[2],pts[0],`${fmtNumber(params.b)}°`,20);
-    }
-  }
-
-  function getRotationHandle(pts){
-    const c=centroid(pts);
-    const candidates=pts.map((anchor,index)=>{
-      let vx=anchor.x-c.x,vy=anchor.y-c.y;
-      const len=Math.hypot(vx,vy)||1;
-      const handle={x:c.x+vx/len*(len+34),y:c.y+vy/len*(len+34)};
-      const margin=Math.min(handle.x,handle.y,W-handle.x,H-handle.y);
-      return {center:c,anchor,handle,index,margin};
-    });
-    candidates.sort((a,b)=>b.margin-a.margin);
-    return candidates[0];
-  }
-
-  function drawRotationHandle(pts,tr){
-    const r=getRotationHandle(pts);
-    tr.rotationHandle=r;
-    ctx.save();
-    ctx.strokeStyle=tr===selectedTriangle?'#d85d25':'rgba(255,139,85,.65)';
-    ctx.lineWidth=tr===selectedTriangle?3:2;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(r.anchor.x,r.anchor.y);ctx.lineTo(r.handle.x,r.handle.y);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='#fff';ctx.lineWidth=3;
-    ctx.beginPath();ctx.arc(r.handle.x,r.handle.y,tr===selectedTriangle?17:15,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#d85d25';ctx.font='900 18px sans-serif';
-    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↻',r.handle.x,r.handle.y+1);
-    ctx.restore();
-  }
-
-  function rotateSelected(degrees){
-    let tr=selectedTriangle;
-    if(!tr || tr.locked){
-      tr=triangles.slice(1).find(x=>!x.locked) || null;
-      selectTriangle(tr);
-    }
-    if(!tr)return;
-    tr.angle=normalizeAngle(tr.angle+rad(degrees));
-  }
-  function grid(){
-    ctx.save();ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle='#edf2fa';ctx.lineWidth=1;
-    for(let x=0;x<W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-    ctx.restore();
-  }
-
-  function drawExp1(t){
-    const base=referenceTriangle();
-    const c=centroid(base);
-    const pulse=.56+.34*(.5+.5*Math.sin(t*1.25));
-    const small=base.map(p=>({x:c.x+(p.x-c.x)*pulse,y:c.y+(p.y-c.y)*pulse}));
-    drawTriangle(base,'rgba(79,124,255,.28)','rgba(79,124,255,.035)',2,[8,7]);
-    drawTriangle(small,'#ff8b55','rgba(255,139,85,.16)',4);
-    drawAngleArc(small[0],small[1],small[2],`${params.a}°`);
-    drawAngleArc(small[1],small[2],small[0],`${params.b}°`);
-    drawAngleArc(small[2],small[0],small[1],`${params.c}°`);
-    ctx.fillStyle='#6d7a90';ctx.font='700 13px sans-serif';ctx.fillText('각 표시를 유지한 채 크기만 계속 변합니다.',18,H-18);
-  }
-
-  function drawCopies(t){
-    const ref=triangles[0]?.pts;
-    if(!ref)return;
-
-    drawTriangle(ref,'#4f7cff','rgba(79,124,255,.12)',5);
-    drawConditionLabels(ref,'#315fc9');
-
-    for(let i=1;i<triangles.length;i++){
-      const tr=triangles[i];
-      let pts=transform(tr.base,tr.dx,tr.dy,tr.angle);
-      tr.screenPts=pts;
-
-      const rc=centroid(ref), tc=centroid(pts);
-      const centerGap=dist(rc,tc);
-      const angleGap=Math.abs(normalizeAngle(tr.angle));
-
-      // 위치와 방향이 모두 가까워졌을 때만 정확히 포개고 고정한다.
-      if(!tr.locked && centerGap<24 && angleGap<rad(9)){
-        tr.dx+=rc.x-tc.x;
-        tr.dy+=rc.y-tc.y;
-        tr.angle=0;
-        tr.locked=true;
-        if(selectedTriangle===tr) selectTriangle(triangles.slice(1).find(x=>!x.locked) || null);
-        pts=transform(tr.base,tr.dx,tr.dy,tr.angle);
-      }
-
-      const isSelected=tr===selectedTriangle && !tr.locked;
-      drawTriangle(
-        pts,
-        tr.locked?'#26a269':(isSelected?'#d85d25':'#ff8b55'),
-        tr.locked?'rgba(38,162,105,.18)':(isSelected?'rgba(255,139,85,.23)':'rgba(255,139,85,.13)'),
-        tr.locked?6:(isSelected?6:4)
-      );
-
-      if(!tr.locked){
-        drawConditionLabels(pts,isSelected?'#8f3513':'#a84f25');
-        const c=centroid(pts);
-        ctx.save();
-        ctx.fillStyle=isSelected?'#8f3513':'#7d4f2d';
-        ctx.font='900 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(isSelected?'선택됨 · 이동':'탭하여 선택',c.x,c.y);
-        ctx.restore();
-        drawRotationHandle(pts,tr);
-      }
-    }
-  }
-
-  function drawExp3(t){
-    const base=params.base, side=params.side, theta=rad(params.ang);
-    const roots=(params.roots && params.roots.length)
-      ? params.roots
-      : solveExperiment3(base,side,params.ang);
-
-    if(!roots.length) return;
-
-    // 수학 좌표: A=(0,0), B=(base,0), 각의 반직선 위 점 P=(t cosθ, t sinθ)
-    const A0={x:0,y:0};
-    const B0={x:base,y:0};
-    const possible=roots.map(v=>({x:v*Math.cos(theta),y:v*Math.sin(theta),t:v}));
-    const targetAngles=possible.map(p=>Math.atan2(p.y-B0.y,p.x-B0.x)).sort((a,b)=>a-b);
-
-    let swingMin, swingMax;
-    if(targetAngles.length===2){
-      swingMin=targetAngles[0]-.08;
-      swingMax=targetAngles[1]+.08;
-    }else{
-      swingMin=targetAngles[0]-.42;
-      swingMax=targetAngles[0]+.42;
-    }
-
-    const swingMid=(swingMin+swingMax)/2;
-    const swingHalf=(swingMax-swingMin)/2;
-    const movingAngle=swingMid+swingHalf*Math.sin(t*1.8);
-    const moving0={
-      x:B0.x+side*Math.cos(movingAngle),
-      y:B0.y+side*Math.sin(movingAngle)
-    };
-
-    const rayLength=Math.max(base,side,...roots)*1.18;
-    const ray0={x:rayLength*Math.cos(theta),y:rayLength*Math.sin(theta)};
-
-    // 실제로 화면에 그릴 모든 점을 기준으로 자동 확대/축소한다.
-    const fitPoints=[A0,B0,ray0,moving0,...possible];
-    for(let i=0;i<=24;i++){
-      const a=swingMin+(swingMax-swingMin)*(i/24);
-      fitPoints.push({x:B0.x+side*Math.cos(a),y:B0.y+side*Math.sin(a)});
-    }
-
-    let minX=Math.min(...fitPoints.map(p=>p.x));
-    let maxX=Math.max(...fitPoints.map(p=>p.x));
-    let minY=Math.min(...fitPoints.map(p=>p.y));
-    let maxY=Math.max(...fitPoints.map(p=>p.y));
-
-    const rangeX=Math.max(1e-6,maxX-minX);
-    const rangeY=Math.max(1e-6,maxY-minY);
-    const padX=72, padTop=58, padBottom=48;
-    const usableW=Math.max(120,W-padX*2);
-    const usableH=Math.max(100,H-padTop-padBottom);
-    const scale=Math.min(usableW/rangeX,usableH/rangeY)*.92;
-    const modelCX=(minX+maxX)/2;
-    const modelCY=(minY+maxY)/2;
-    const screenCX=W/2;
-    const screenCY=padTop+usableH*.52;
-
-    const map=p=>({
-      x:screenCX+(p.x-modelCX)*scale,
-      y:screenCY-(p.y-modelCY)*scale
-    });
-
-    const A=map(A0), B=map(B0), rayEnd=map(ray0), moving=map(moving0);
-    const possibleScreen=possible.map(map);
-
-    ctx.save();
-    ctx.lineCap='round';
-    ctx.lineJoin='round';
-
-    // 밑변
-    ctx.strokeStyle='#4f7cff';
-    ctx.lineWidth=6;
-    ctx.beginPath();
-    ctx.moveTo(A.x,A.y);
-    ctx.lineTo(B.x,B.y);
-    ctx.stroke();
-
-    // 입력된 각을 나타내는 반직선
-    ctx.strokeStyle='rgba(79,124,255,.42)';
-    ctx.lineWidth=3;
-    ctx.setLineDash([10,8]);
-    ctx.beginPath();
-    ctx.moveTo(A.x,A.y);
-    ctx.lineTo(rayEnd.x,rayEnd.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    drawAngleArc(A,B,rayEnd,`${fmtNumber(params.ang)}°`,24);
-
-    // 가능한 삼각형들을 점선으로 표시
-    possibleScreen.forEach((p,i)=>{
-      ctx.strokeStyle='rgba(38,162,105,.58)';
-      ctx.lineWidth=3;
-      ctx.setLineDash([7,6]);
-      ctx.beginPath();
-      ctx.moveTo(A.x,A.y);
-      ctx.lineTo(p.x,p.y);
-      ctx.lineTo(B.x,B.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle='#26a269';
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,7,0,Math.PI*2);
-      ctx.fill();
-
-      ctx.fillStyle='#237a53';
-      ctx.font='800 12px sans-serif';
-      ctx.textAlign='left';
-      ctx.textBaseline='alphabetic';
-      ctx.fillText(`만날 수 있는 자리 ${i+1}`,p.x+10,p.y-10);
-    });
-
-    // 주황색 변이 움직이는 범위
-    ctx.strokeStyle='rgba(255,139,85,.28)';
-    ctx.lineWidth=2;
-    ctx.setLineDash([5,7]);
-    ctx.beginPath();
-    for(let i=0;i<=36;i++){
-      const a=swingMin+(swingMax-swingMin)*(i/36);
-      const p=map({x:B0.x+side*Math.cos(a),y:B0.y+side*Math.sin(a)});
-      if(i===0)ctx.moveTo(p.x,p.y);
-      else ctx.lineTo(p.x,p.y);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 흔들리는 두 번째 변
-    ctx.strokeStyle='#ff8b55';
-    ctx.lineWidth=6;
-    ctx.beginPath();
-    ctx.moveTo(B.x,B.y);
-    ctx.lineTo(moving.x,moving.y);
-    ctx.stroke();
-
-    ctx.fillStyle='#ff8b55';
-    ctx.beginPath();
-    ctx.arc(moving.x,moving.y,7,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    // 길이 표시
-    drawEdgeLabel(A,B,fmtNumber(base),[A,B,possibleScreen[0]],'#315fc9');
-    const sideLabelPoint=possibleScreen[possibleScreen.length-1];
-    drawEdgeLabel(B,sideLabelPoint,fmtNumber(side),[A,B,sideLabelPoint],'#a84f25');
-
-    labelPoint(A,'A');
-    labelPoint(B,'B');
-
-    ctx.save();
-    ctx.fillStyle='#6d7a90';
-    ctx.font='700 13px sans-serif';
-    ctx.textAlign='left';
-    ctx.fillText('주황색 변의 끝이 초록색 위치와 만나는 모습을 관찰하세요.',18,H-18);
-    ctx.restore();
-  }
-
-  function drawAssembly(t){
-    const ref=referenceTriangle();
-    const progress=clamp(t/1.6,0,1);
-    if(progress<1){
-      const c=centroid(ref);
-      ref.forEach((p,i)=>{
-        const q=ref[(i+1)%3];
-        const off=(1-progress)*80;
-        const mx=(p.x+q.x)/2,my=(p.y+q.y)/2;
-        const nx=-(q.y-p.y),ny=q.x-p.x,nl=Math.hypot(nx,ny)||1;
-        const ox=nx/nl*off*(i%2?1:-1),oy=ny/nl*off*(i%2?1:-1);
-        ctx.strokeStyle=i===0?'#4f7cff':'#ff8b55';ctx.lineWidth=6;ctx.lineCap='round';
-        ctx.beginPath();ctx.moveTo(p.x+ox,q.y? p.y+oy:p.y);ctx.lineTo(q.x+ox,q.y+oy);ctx.stroke();
-      });
-    }else drawCopies(t);
-  }
-
-  function animate(now){
-    resize();
-    grid();
-    const t=running?(now-startTime)/1000:(pauseTime-startTime)/1000;
-    if(current===1&&Object.keys(params).length) drawExp1(t);
-    else if(current===3&&Object.keys(params).length) drawExp3(t);
-    else if([2,4,5].includes(current)&&triangles.length){
-      if((current===4||current===5) && t<1.7) drawAssembly(t);
-      else drawCopies(t);
-    } else {
-      ctx.fillStyle='#8190a8';ctx.font='800 18px sans-serif';ctx.textAlign='center';
-      ctx.fillText('위에서 실험을 선택하고 생성하기를 눌러 주세요.',W/2,H/2);
-      ctx.textAlign='start';
-    }
-    requestAnimationFrame(animate);
-  }
-
-  function pointInTriangle(p,a,b,c){
-    const area=(p1,p2,p3)=>(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y))/2;
-    const A=Math.abs(area(a,b,c)),A1=Math.abs(area(p,b,c)),A2=Math.abs(area(a,p,c)),A3=Math.abs(area(a,b,p));
-    return Math.abs(A-(A1+A2+A3))<2;
-  }
-  function pointerPos(e){
-    const r=canvas.getBoundingClientRect();
-    const pt=e.touches?e.touches[0]:e;
-    return {x:pt.clientX-r.left,y:pt.clientY-r.top};
-  }
-  function down(e){
-    if(![2,4,5].includes(current))return;
-    const p=pointerPos(e);
-
-    // 큰 터치 영역으로 회전 손잡이를 먼저 감지한다.
-    for(let i=triangles.length-1;i>=1;i--){
-      const tr=triangles[i]; if(tr.locked)continue;
-      const pts=transform(tr.base,tr.dx,tr.dy,tr.angle);
-      const rh=getRotationHandle(pts);
-      if(dist(p,rh.handle)<=30){
-        selectTriangle(tr);
-        drag={
-          mode:'rotate',
-          tr,
-          center:rh.center,
-          startPointerAngle:Math.atan2(p.y-rh.center.y,p.x-rh.center.x),
-          startTriangleAngle:tr.angle
-        };
-        canvas.setPointerCapture?.(e.pointerId);
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // 삼각형 내부는 선택과 위치 이동에 사용한다.
-    for(let i=triangles.length-1;i>=1;i--){
-      const tr=triangles[i]; if(tr.locked)continue;
-      const pts=transform(tr.base,tr.dx,tr.dy,tr.angle);
-      if(pointInTriangle(p,...pts)){
-        selectTriangle(tr);
-        drag={mode:'move',tr,last:p};
-        canvas.setPointerCapture?.(e.pointerId);
-        e.preventDefault();
-        return;
-      }
-    }
-  }
-
-  function move(e){
-    if(!drag)return;
-    const p=pointerPos(e);
-    if(drag.mode==='rotate'){
-      const pointerAngle=Math.atan2(p.y-drag.center.y,p.x-drag.center.x);
-      drag.tr.angle=normalizeAngle(drag.startTriangleAngle+(pointerAngle-drag.startPointerAngle));
-    }else{
-      drag.tr.dx+=p.x-drag.last.x;
-      drag.tr.dy+=p.y-drag.last.y;
-      drag.last=p;
-    }
-    e.preventDefault();
-  }
-
-  function up(e){
-    if(drag && e?.pointerId!==undefined) canvas.releasePointerCapture?.(e.pointerId);
-    drag=null;
-  }
-  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
-
-  document.querySelectorAll('[data-run]').forEach(b=>b.addEventListener('click',()=>runExperiment(Number(b.dataset.run))));
-  document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',e=>{if(!e.target.matches('input,button'))setActive(Number(c.dataset.exp));}));
-  document.getElementById('replayBtn').addEventListener('click',()=>runExperiment(current));
-  document.getElementById('scatterBtn').addEventListener('click',scatter);
-  document.getElementById('rotateLeft15').addEventListener('click',()=>rotateSelected(-15));
-  document.getElementById('rotateRight15').addEventListener('click',()=>rotateSelected(15));
-  document.getElementById('rotateLeft5').addEventListener('click',()=>rotateSelected(-5));
-  document.getElementById('rotateRight5').addEventListener('click',()=>rotateSelected(5));
-  document.getElementById('resetBtn').addEventListener('click',()=>{
-    document.querySelectorAll('textarea').forEach(t=>t.value='');
-    setActive(1);triangles=[];params={};status.textContent='세 각을 입력한 뒤 생성하기를 눌러 보세요.';
+const tabs=[...document.querySelectorAll(".tab-btn")];
+const pages=[...document.querySelectorAll(".page")];
+tabs.forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    tabs.forEach(b=>b.classList.toggle("active",b===btn));
+    pages.forEach(p=>p.classList.toggle("active",p.id===btn.dataset.page));
+    setTimeout(()=>{resize1();resize2();},50);
   });
-  let pauseTime=0;
-  pauseBtn.addEventListener('click',()=>{
-    if(running){pauseTime=performance.now();running=false;pauseBtn.textContent='애니메이션 계속';}
-    else{startTime+=performance.now()-pauseTime;running=true;pauseBtn.textContent='애니메이션 멈춤';}
-  });
+});
 
-  // 저장 권한이 허용된 브라우저에서는 관찰 기록을 자동 저장한다.
-  document.querySelectorAll('textarea').forEach(t=>{
-    try{
-      const saved=localStorage.getItem('triangleLab_'+t.id);
-      if(saved!==null)t.value=saved;
-    }catch(err){}
-    t.addEventListener('input',()=>{
-      try{localStorage.setItem('triangleLab_'+t.id,t.value);}catch(err){}
-    });
+// 길이 입력칸에서는 음수를 허용하지 않습니다.
+["p1","p2","p3","predSingle"].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener("keydown",(e)=>{
+    if(e.key==="-" || e.key==="Subtract") e.preventDefault();
   });
+  el.addEventListener("input",()=>{
+    if(el.value!=="" && Number(el.value)<0) el.value=Math.abs(Number(el.value));
+  });
+  el.addEventListener("blur",()=>{
+    if(el.value!=="" && Number(el.value)<0) el.value="0";
+  });
+});
 
-  resize();
-  runExperiment(1);
-  requestAnimationFrame(animate);
-})();
+// Shared drawing helpers
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function ease(t){t=clamp(t,0,1);return .5-.5*Math.cos(Math.PI*t)}
+
+// 선택한 소수 자릿수에서 반올림하지 않고 그대로 버립니다.
+function truncateTo(value, places){
+  const factor=Math.pow(10, places);
+  return Math.trunc(value*factor)/factor;
+}
+function formatTruncated(value, places){
+  return truncateTo(value, places).toFixed(places);
+}
+
+function drawBackground(ctx,W,H){
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#fffaf0");g.addColorStop(1,"#fff3c9");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.globalAlpha=.12;ctx.strokeStyle="#cdb66d";
+  for(let x=20;x<W;x+=34){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=20;y<H;y+=34){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  ctx.restore();
+}
+function drawWheel(ctx,x,y,r,a,label,d,color){
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=color;ctx.strokeStyle="#40536d";ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.lineWidth=2;
+  for(let k=0;k<8;k++){const q=k*Math.PI/4;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(q)*r*.86,Math.sin(q)*r*.86);ctx.stroke()}
+  ctx.restore();
+  ctx.save();ctx.textAlign="center";ctx.fillStyle="#334155";ctx.font="900 14px sans-serif";ctx.fillText(label,x,y-r-9);
+  ctx.font="800 11px sans-serif";ctx.fillText("지름 "+d.toFixed(d%1?1:0)+" cm",x,y+4);ctx.restore();
+}
+function drawRuler(ctx,x,y,max,scale,labelEvery=10){
+  ctx.save();ctx.strokeStyle="#746b58";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+max*scale,y);ctx.stroke();
+  const tickStep=max>180?10:5;
+  for(let cm=0;cm<=max;cm+=tickStep){
+    const xx=x+cm*scale,h=(cm%labelEvery===0)?9:5;
+    ctx.beginPath();ctx.moveTo(xx,y-h/2);ctx.lineTo(xx,y+h/2);ctx.stroke();
+    if(cm%labelEvery===0){ctx.font="700 10px sans-serif";ctx.textAlign="center";ctx.fillStyle="#66604f";ctx.fillText(cm,xx,y+17);}
+  }
+  ctx.font="700 10px sans-serif";ctx.textAlign="left";ctx.fillStyle="#66604f";ctx.fillText("cm",x+max*scale+5,y+4);
+  ctx.restore();
+}
+function drawEndpoint(ctx,collector,x,y,index,revealed,distance,places){
+  ctx.save();
+  ctx.strokeStyle="#c26f2b";ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(x,y-55);ctx.lineTo(x,y+12);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="#d77c2c";ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x-2,y-2,2.4,0,Math.PI*2);ctx.fill();
+  ctx.textAlign="center";ctx.font="900 11px sans-serif";
+  if(revealed){
+    const text=formatTruncated(distance,places)+" cm";
+    const tw=ctx.measureText(text).width+18;
+    ctx.fillStyle="rgba(255,250,238,.98)";
+    ctx.fillRect(x-tw/2,y-79,tw,25);
+    ctx.strokeStyle="#d59a60";ctx.lineWidth=1;ctx.strokeRect(x-tw/2,y-79,tw,25);
+    ctx.fillStyle="#9f571f";ctx.fillText(text,x,y-62);
+  }else{
+    ctx.fillStyle="#9f571f";ctx.fillText("끝점을 눌러 확인",x,y-62);
+  }
+  ctx.restore();
+  collector.push({x,y,r:24,index});
+}
+
+// Page 1
+const canvas1=document.getElementById("canvas1");
+const ctx1=canvas1.getContext("2d");
+const holder1=document.getElementById("holder1");
+const badge1=document.getElementById("badge1");
+const status1=document.getElementById("status1");
+const precisionRange1=document.getElementById("precisionRange1");
+const precisionValue1=document.getElementById("precisionValue1");
+let W1=1,H1=1,DPR1=1,places1=3;
+let state1={running:false,finished:false,start:0,reveal:[false,false,false],hits:[],ds:[10,20,30],duration:3000};
+
+function resize1(){
+  const r=holder1.getBoundingClientRect();
+  W1=Math.max(1,Math.floor(r.width));H1=Math.max(1,Math.floor(r.height));
+  DPR1=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.floor(W1*DPR1),bh=Math.floor(H1*DPR1);
+  if(canvas1.width!==bw||canvas1.height!==bh){canvas1.width=bw;canvas1.height=bh}
+  ctx1.setTransform(DPR1,0,0,DPR1,0,0);
+}
+if("ResizeObserver" in window)new ResizeObserver(resize1).observe(holder1);
+window.addEventListener("resize",resize1);
+
+precisionRange1.addEventListener("input",()=>{
+  places1=parseInt(precisionRange1.value,10);
+  precisionValue1.textContent=`소수 ${places1}째 자리`;
+});
+
+function setStatus1(msg,err=false){status1.textContent=msg;status1.classList.toggle("error",err)}
+function validMain(){
+  const ps=[1,2,3].map(i=>parseFloat(document.getElementById("p"+i).value));
+  if(ps.some(v=>!Number.isFinite(v)||v<=0)){setStatus1("세 원의 예상 이동거리를 먼저 모두 입력해 주세요.",true);return false}
+  return true;
+}
+document.getElementById("rollMainBtn").onclick=()=>{
+  if(!validMain())return;
+  state1.running=true;state1.finished=false;state1.start=performance.now();state1.reveal=[false,false,false];
+  badge1.textContent="1회전 중";setStatus1("세 원이 한 바퀴 굴러갑니다. 완료 후 주황색 끝점을 눌러 보세요.");
+};
+document.getElementById("resetMainBtn").onclick=()=>{
+  state1.running=false;state1.finished=false;state1.reveal=[false,false,false];state1.hits=[];
+  badge1.textContent="출발 준비";setStatus1("출발점으로 돌아왔습니다.");
+};
+canvas1.addEventListener("pointerup",(e)=>{
+  const rect=canvas1.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+  for(const hit of state1.hits){
+    if(Math.hypot(x-hit.x,y-hit.y)<=hit.r){
+      state1.reveal[hit.index]=true;
+      setStatus1(`원 ${["A","B","C"][hit.index]}의 이동거리가 나타났습니다. 활동지에 기록해 보세요.`);
+      break;
+    }
+  }
+});
+function render1(now){
+  drawBackground(ctx1,W1,H1);state1.hits=[];
+  const ds=state1.ds,cs=ds.map(d=>Math.PI*d);
+  // 소수 자릿수 조절 상자와 첫 번째 결과 표시가 겹치지 않도록 상단 여백을 확보합니다.
+  const top=88,bottom=18,lane=(H1-top-bottom)/3,startX=Math.max(80,W1*.09);
+  const maxD=Math.max(...ds),maxC=Math.max(...cs),scale=Math.max(1.5,Math.min((lane*.27)/(maxD/2),(W1-startX-95)/maxC));
+  const rulerMax=100;
+  let p=0;
+  if(state1.running){
+    p=ease((now-state1.start)/state1.duration);
+    if(now-state1.start>=state1.duration){p=1;state1.running=false;state1.finished=true;badge1.textContent="1회전 완료";setStatus1("이제 주황색 끝점을 눌러 이동거리를 확인하세요.");}
+  }else if(state1.finished)p=1;
+  ctx1.save();ctx1.fillStyle="#475369";ctx1.font="800 13px sans-serif";ctx1.textAlign="right";ctx1.fillText("10cm, 20cm, 30cm인 원이 각각 정확히 한 바퀴 굴러갑니다.",W1-22,76);ctx1.restore();
+  for(let i=0;i<3;i++){
+    const d=ds[i],r=d/2*scale,travel=cs[i]*scale,gy=top+lane*(i+1)-27,endX=startX+travel;
+    drawRuler(ctx1,startX,gy+12,rulerMax,scale,10);
+    drawWheel(ctx1,startX+travel*p,gy-r,r,p*Math.PI*2,["원 A","원 B","원 C"][i],d,["#9fc5ff","#91dcc4","#ffc17a"][i]);
+    if(state1.finished)drawEndpoint(ctx1,state1.hits,endX,gy,i,state1.reveal[i],cs[i],places1);
+  }
+  requestAnimationFrame(render1);
+}
+
+// Page 2
+const canvas2=document.getElementById("canvas2");
+const ctx2=canvas2.getContext("2d");
+const holder2=document.getElementById("holder2");
+const badge2=document.getElementById("badge2");
+const status2=document.getElementById("status2");
+const precisionRange2=document.getElementById("precisionRange2");
+const precisionValue2=document.getElementById("precisionValue2");
+const currentD=document.getElementById("currentD");
+const singleTitle=document.getElementById("singleTitle");
+let W2=1,H2=1,DPR2=1,places2=3;
+let state2={diameter:15,running:false,finished:false,start:0,reveal:false,hits:[],duration:3000};
+
+function resize2(){
+  const r=holder2.getBoundingClientRect();
+  W2=Math.max(1,Math.floor(r.width));H2=Math.max(1,Math.floor(r.height));
+  DPR2=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.floor(W2*DPR2),bh=Math.floor(H2*DPR2);
+  if(canvas2.width!==bw||canvas2.height!==bh){canvas2.width=bw;canvas2.height=bh}
+  ctx2.setTransform(DPR2,0,0,DPR2,0,0);
+}
+if("ResizeObserver" in window)new ResizeObserver(resize2).observe(holder2);
+window.addEventListener("resize",resize2);
+
+precisionRange2.addEventListener("input",()=>{
+  places2=parseInt(precisionRange2.value,10);
+  precisionValue2.textContent=`소수 ${places2}째 자리`;
+});
+
+function setStatus2(msg,err=false){status2.textContent=msg;status2.classList.toggle("error",err)}
+function setSingleDiameter(d){
+  state2.diameter=d;state2.running=false;state2.finished=false;state2.reveal=false;state2.hits=[];
+  currentD.value=d;singleTitle.textContent=`지름 ${d}cm 실험`;badge2.textContent="출발 준비";
+}
+function startSingle(d){
+  const pred=parseFloat(document.getElementById("predSingle").value);
+  setSingleDiameter(d);
+  state2.running=true;state2.start=performance.now();
+  badge2.textContent="1회전 중";setStatus2(`지름 ${d}cm인 원이 한 바퀴 굴러갑니다. 완료 후 주황색 끝점을 누르세요.`);
+}
+document.getElementById("run15Btn").onclick=()=>startSingle(15);
+document.getElementById("run25Btn").onclick=()=>startSingle(25);
+document.getElementById("runCustomBtn").onclick=()=>{
+  const d=parseFloat(document.getElementById("customD").value);
+  if(!Number.isFinite(d)||d<50||d>100){setStatus2("직접 입력은 50cm 이상 100cm 이하로 입력해 주세요.",true);return}
+  startSingle(d);
+};
+document.getElementById("resetSingleBtn").onclick=()=>{
+  state2.running=false;state2.finished=false;state2.reveal=false;state2.hits=[];
+  badge2.textContent="출발 준비";setStatus2("출발점으로 돌아왔습니다.");
+};
+document.getElementById("rerunSingleBtn").onclick=()=>{
+  const d=parseFloat(currentD.value)||15;
+  startSingle(d);
+};
+canvas2.addEventListener("pointerup",(e)=>{
+  const rect=canvas2.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+  for(const hit of state2.hits){
+    if(Math.hypot(x-hit.x,y-hit.y)<=hit.r){
+      state2.reveal=true;
+      setStatus2(`지름 ${state2.diameter}cm인 원의 이동거리가 나타났습니다. 활동지에 기록해 보세요.`);
+      break;
+    }
+  }
+});
+function render2(now){
+  drawBackground(ctx2,W2,H2);state2.hits=[];
+  const d=state2.diameter,actual=Math.PI*d,startX=Math.max(85,W2*.08),gy=Math.max(235,H2*.68);
+  const maxCm=Math.ceil(actual/20)*20,scale=Math.min((W2-startX-90)/maxCm,3.6),radiusVisual=clamp(d*.75,34,82),travel=actual*scale,endX=startX+travel;
+  let p=0;
+  if(state2.running){
+    p=ease((now-state2.start)/state2.duration);
+    if(now-state2.start>=state2.duration){p=1;state2.running=false;state2.finished=true;badge2.textContent="1회전 완료";setStatus2("이제 주황색 끝점을 눌러 이동거리를 확인하세요.");}
+  }else if(state2.finished)p=1;
+  ctx2.save();ctx2.textAlign="center";ctx2.fillStyle="#475369";ctx2.font="900 15px sans-serif";
+  ctx2.fillText(`지름 ${d.toFixed(d%1?1:0)}cm인 원의 한 바퀴 이동거리`,W2/2,82);
+  ctx2.fillStyle="#687386";ctx2.font="700 12px sans-serif";ctx2.fillText("실험 1과 같은 방식으로 실험합니다.",W2/2,101);ctx2.restore();
+  drawRuler(ctx2,startX,gy+12,maxCm,scale,maxCm>200?50:20);
+  drawWheel(ctx2,startX+travel*p,gy-radiusVisual,radiusVisual,p*Math.PI*2,"실험 원",d,"#d7b7ff");
+  if(state2.finished)drawEndpoint(ctx2,state2.hits,endX,gy,100,state2.reveal,actual,places2);
+  requestAnimationFrame(render2);
+}
+
+resize1();resize2();
+requestAnimationFrame(render1);
+requestAnimationFrame(render2);
 </script>
-</body>
-</html>
+
+</body></html>
